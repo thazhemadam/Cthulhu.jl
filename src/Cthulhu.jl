@@ -21,6 +21,14 @@ else
     macro constprop(_, ex); esc(ex); end
 end
 
+const IS_AVI_BRANCH = Base.GIT_VERSION_INFO.branch == "avi/typelattice"
+@static if IS_AVI_BRANCH
+    import Core.Compiler: ⊤, ⊥, AbstractLattice, NativeType, TypeLattice
+    const Types = Vector{AbstractLattice}
+else
+    const Types = Vector{Any}
+end
+
 Base.@kwdef mutable struct CthulhuConfig
     enable_highlighter::Bool = false
     highlighter::Cmd = `pygmentize -l`
@@ -193,7 +201,11 @@ end
         infos = interp.unopt[mi].stmt_infos
         slottypes = codeinf.slottypes
         if isnothing(slottypes)
-            slottypes = Any[ Any for i = 1:length(codeinf.slotflags) ]
+            @static if IS_AVI_BRANCH
+                slottypes = AbstractLattice[ ⊤ for i = 1:length(codeinf.slotflags) ]
+            else
+                slottypes = Any[ Any for i = 1:length(codeinf.slotflags) ]
+            end
         end
     else
         codeinst = interp.opt[mi]
@@ -209,7 +221,11 @@ end
             # But with coverage on, the empty function body isn't empty due to :code_coverage_effect expressions.
             codeinf = nothing
             infos = []
-            slottypes = Any[Base.unwrap_unionall(mi.specTypes).parameters...]
+            @static if IS_AVI_BRANCH
+                slottypes = AbstractLatticce[NativeType(t) for t in Base.unwrap_unionall(mi.specTypes).parameters]
+            else
+                slottypes = Any[Base.unwrap_unionall(mi.specTypes).parameters...]
+            end
         else
             Core.eval(Main, quote
                 interp = $interp
@@ -219,7 +235,7 @@ end
             error("couldn't find the source; inspect `Main.interp` and `Main.mi`")
         end
     end
-    (codeinf, rt, infos, slottypes::Vector{Any})
+    return codeinf, rt, infos, slottypes::Types
 end
 
 ##

@@ -36,9 +36,9 @@ struct UncachedCallInfo <: WrappedCallInfo
 end
 
 struct PureCallInfo <: CallInfo
-    argtypes::Vector{Any}
+    argtypes::Types
     rt
-    PureCallInfo(argtypes::Vector{Any}, @nospecialize(rt)) =
+    PureCallInfo(argtypes::Types, @nospecialize(rt)) =
         new(argtypes, rt)
 end
 get_mi(::PureCallInfo) = nothing

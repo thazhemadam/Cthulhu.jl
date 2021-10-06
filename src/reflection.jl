@@ -29,7 +29,7 @@ end
 
 function find_callsites(interp::CthulhuInterpreter, CI::Union{Core.CodeInfo, IRCode},
                         stmt_info::Union{Vector, Nothing}, mi::Core.MethodInstance,
-                        slottypes::Vector{Any}, optimize::Bool=true;
+                        slottypes::Types, optimize::Bool=true;
                         params=current_params())
     sptypes = sptypes_from_meth_instance(mi)
     callsites = Callsite[]

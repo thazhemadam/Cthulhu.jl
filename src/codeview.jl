@@ -119,7 +119,11 @@ function cthulhu_typed(io::IO, debuginfo::Symbol,
     if isa(src, Core.CodeInfo)
         # we're working on pre-optimization state, need to ignore `LimitedAccuracy`
         src = copy(src)
-        src.ssavaluetypes = Base.mapany(ignorelimited, src.ssavaluetypes::Vector{Any})
+        @static if IS_AVI_BRANCH
+            src.ssavaluetypes = AbstractLattice[ignorelimited(t) for t in src.ssavaluetypes::Types]
+        else
+            src.ssavaluetypes = Base.mapany(ignorelimited, src.ssavaluetypes::Vector{Any})
+        end
         src.rettype = ignorelimited(src.rettype)
 
         if src.slotnames !== nothing
@@ -145,7 +149,12 @@ function cthulhu_typed(io::IO, debuginfo::Symbol,
         code = src isa IRCode ? src.stmts.inst : src.code
         cst = Vector{Int}(undef, length(code))
         params = Core.Compiler.OptimizationParams(Core.Compiler.NativeInterpreter())
-        maxcost = Core.Compiler.statement_costs!(cst, code, src, Any[mi.sparam_vals...], false, params)
+        @static if IS_AVI_BRANCH
+            sptypes = AbstractLattice[isa(sp, Type) ? NativeType(sp) : Const(sp) for sp in mi.sparam_vals]
+            maxcost = Core.Compiler.statement_costs!(cst, code, src, sptypes, false, params)
+        else
+            maxcost = Core.Compiler.statement_costs!(cst, code, src, Any[mi.sparam_vals...], false, params)
+        end
         nd = ndigits(maxcost)
         _lineprinter = lineprinter(src)
         function preprinter(io, linestart, idx)
