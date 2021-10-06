@@ -51,11 +51,17 @@ function usage(@nospecialize(view_cmd), optimize, iswarn, hide_type_stable, debu
         active_option ? printstyled(io, c; color=:green) :  printstyled(io, c; color=:red)
     end
 
+    colorize(iotmp, s::AbstractString; color::Symbol = :cyan) = stringify(iotmp) do io
+        printstyled(io, s; color)
+    end
+
     io, iotmp = IOBuffer(), IOBuffer()
     ioctx = IOContext(io, :color=>true)
 
-    println(ioctx, "Select a call to descend into or ↩ to ascend. [q]uit. [b]ookmark.")
-    println(ioctx, "Toggles: [",
+    println(ioctx,
+        colorize(iotmp, "Select a call to descend into or ↩ to ascend. [q]uit. [b]ookmark."; color=:blue))
+    println(ioctx,
+        colorize(iotmp, "Toggles"), ": [",
         colorize(iotmp, optimize, 'o'), "]ptimize, [",
         colorize(iotmp, iswarn, 'w'), "]arn, [",
         colorize(iotmp, hide_type_stable, 'h'), "]ide type-stable statements, [",
@@ -66,16 +72,18 @@ function usage(@nospecialize(view_cmd), optimize, iswarn, hide_type_stable, debu
         colorize(iotmp, inline_cost, 'i'), "]nlining costs, [",
         colorize(iotmp, type_annotations, 't'), "]ype annotations, [",
         colorize(iotmp, highlight, 's'), "]yntax highlight for Source/LLVM/Native.")
-    println(ioctx, "Show: [",
+    println(ioctx,
+        colorize(iotmp, "Show"), ": [",
         colorize(iotmp, view_cmd === cthulhu_source, 'S'), "]ource code, [",
         colorize(iotmp, view_cmd === cthulhu_ast, 'A'), "]ST, [",
         colorize(iotmp, view_cmd === cthulhu_typed, 'T'), "]yped code, [",
         colorize(iotmp, view_cmd === cthulhu_llvm, 'L'), "]LVM IR, [",
         colorize(iotmp, view_cmd === cthulhu_native, 'N'), "]ative code")
     print(ioctx,
-    """
-    Actions: [E]dit source code, [R]evise and redisplay
-    Advanced: dump [P]arams cache.""")
+        colorize(iotmp, "Actions"),
+        ": [E]dit source code, [R]evise and redisplay\n",
+        colorize(iotmp, "Advanced"),
+        ": dump [P]arams cache.")
     return String(take!(io))
 end
 
